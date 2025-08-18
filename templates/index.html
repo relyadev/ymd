@@ -76,9 +76,6 @@
 
     /* Карточки результатов */
     .track-card { display:flex; align-items:center; background:var(--card); border-radius:12px; padding:10px; margin-top:12px; box-shadow: 0 6px 18px rgba(2,6,12,0.6); }
-    .track-card[role="button"]{ cursor:pointer; }
-    .track-card:focus { outline: 2px solid rgba(42,171,238,0.18); box-shadow: 0 8px 24px rgba(26,150,200,0.08); }
-    .track-card:hover { transform: translateY(-2px); transition: transform .15s ease; }
     .cover-img { width:56px; height:56px; border-radius:10px; object-fit:cover; margin-right:12px; flex-shrink:0; background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); }
     .track-info { flex:1; overflow:hidden; }
     .track-title { font-size:16px; font-weight:700; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--text); }
@@ -126,10 +123,7 @@
     {% endif %}
 
     {% for track in tracks %}
-      <!-- Добавлены data-атрибуты и role/button для доступности -->
-      <div class="track-card" role="button" tabindex="0"
-           data-title="{{ track.title | e }}"
-           data-artists="{{ track.artists | e }}">
+      <div class="track-card">
         {% if track.cover_url %}
           <img src="{{ track.cover_url }}" alt="Обложка" class="cover-img">
         {% else %}
@@ -147,59 +141,5 @@
       <p class="empty">Ничего не найдено.</p>
     {% endfor %}
   </div>
-
-  <script>
-    (function () {
-      // Небольшая утилита для безопасного чтения текста внутри карточки
-      function textOrEmpty(el, selector) {
-        try {
-          var q = selector ? el.querySelector(selector) : el;
-          return (q && q.textContent) ? q.textContent.trim() : '';
-        } catch (e) {
-          return '';
-        }
-      }
-
-      function sendToTelegram(payload) {
-        var data = JSON.stringify(payload);
-        // Стандартный доступ к WebApp
-        if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.sendData === 'function') {
-          window.Telegram.WebApp.sendData(data);
-          return true;
-        }
-        // Альтернативная проверка
-        var tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : (window.WebApp ? window.WebApp : null);
-        if (tg && typeof tg.sendData === 'function') {
-          tg.sendData(data);
-          return true;
-        }
-        return false;
-      }
-
-      document.querySelectorAll('.track-card').forEach(function (card) {
-        // клик
-        card.addEventListener('click', function (ev) {
-          ev.preventDefault();
-          var title = card.dataset.title || textOrEmpty(card, '.track-title') || '';
-          var artists = card.dataset.artists || (textOrEmpty(card, '.track-sub') || '').split('·')[0].trim() || '';
-          var payload = { title: title, artists: artists };
-          var ok = sendToTelegram(payload);
-          if (!ok) {
-            // fallback: показать данные пользователю (страница не в Web App)
-            console.warn('Telegram WebApp not available. Data to send:', payload);
-            alert('Telegram Web App не обнаружен. Данные для отправки: ' + JSON.stringify(payload));
-          }
-        });
-
-        // keyboard accessibility: Enter / Space
-        card.addEventListener('keydown', function (ev) {
-          if (ev.key === 'Enter' || ev.key === ' ' || ev.key === 'Spacebar') {
-            ev.preventDefault();
-            card.click();
-          }
-        });
-      });
-    })();
-  </script>
 </body>
 </html>
